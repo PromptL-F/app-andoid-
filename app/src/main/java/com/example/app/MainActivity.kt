@@ -1,34 +1,33 @@
 package com.example.app
-import androidx.lifecycle.lifecycleScope
-import com.example.app.data.MusicRepository
-import kotlinx.coroutines.launch
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import android.os.Bundle
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.app.data.MusicRepository
 import com.example.app.ui.theme.AppTheme
+import kotlinx.coroutines.launch
 
 data class Song(
     val id: Long,
@@ -42,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private var songs = mutableStateOf<List<Song>>(emptyList())
     private var permissionStatus = mutableStateOf("Verificando permiso...")
     private lateinit var repository: MusicRepository
+    private lateinit var musicPlayer: MusicPlayer
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -57,16 +57,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         repository = MusicRepository(applicationContext)
+        musicPlayer = MusicPlayer(applicationContext)
+
         lifecycleScope.launch {
             repository.ensureFavoritesPlaylistExists()
         }
 
-        val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        val permission = if (
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU
+        ) {
             Manifest.permission.READ_MEDIA_AUDIO
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
+
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
             permissionStatus.value = "Permiso ya concedido"
             songs.value = loadSongs()
@@ -76,9 +82,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
-                MainScreen(songs = songs.value, repository = repository)
+                MainScreen(
+                    songs = songs.value,
+                    repository = repository,
+                    player = musicPlayer
+                )
             }
         }
+    }
+
+    override fun onDestroy() {
+        if (::musicPlayer.isInitialized) {
+            musicPlayer.release()
+        }
+        super.onDestroy()
     }
 
     private fun loadSongs(): List<Song> {
@@ -114,6 +131,7 @@ class MainActivity : ComponentActivity() {
                 songList.add(Song(id, title, artist, uri))
             }
         }
+
         return songList
     }
 }
@@ -123,19 +141,35 @@ fun SongList(
     songs: List<Song>,
     modifier: Modifier = Modifier,
     favoriteIds: Set<Long> = emptySet(),
-    onToggleFavorite: (Long) -> Unit = {}
+    onToggleFavorite: (Long) -> Unit = {},
+    onSongClick: (Song) -> Unit = {}
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
-        items(songs) { song ->
+        items(
+            items = songs,
+            key = { it.id }
+        ) { song ->
+            val isFavorite = song.id in favoriteIds
+
             ListItem(
+                modifier = Modifier.clickable {
+                    onSongClick(song)
+                },
                 headlineContent = { Text(song.title) },
                 supportingContent = { Text(song.artist) },
                 trailingContent = {
-                    val isFav = favoriteIds.contains(song.id)
                     IconButton(onClick = { onToggleFavorite(song.id) }) {
                         Icon(
-                            imageVector = if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = "Favorito"
+                            imageVector = if (isFavorite) {
+                                Icons.Filled.Favorite
+                            } else {
+                                Icons.Filled.FavoriteBorder
+                            },
+                            contentDescription = if (isFavorite) {
+                                "Quitar de favoritos"
+                            } else {
+                                "Añadir a favoritos"
+                            }
                         )
                     }
                 }

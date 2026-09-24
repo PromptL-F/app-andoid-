@@ -1,6 +1,7 @@
 package com.example.app
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -32,7 +33,11 @@ import com.example.app.data.MusicRepository
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainScreen(songs: List<Song>, repository: MusicRepository) {
+fun MainScreen(
+    songs: List<Song>,
+    repository: MusicRepository,
+    player: MusicPlayer
+) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
 
@@ -62,32 +67,36 @@ fun MainScreen(songs: List<Song>, repository: MusicRepository) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            Column {
+                MiniPlayer(player = player)
 
-                items.forEach { screen ->
-                    val icon = when (screen) {
-                        Screen.Library -> Icons.Filled.LibraryMusic
-                        Screen.Playlists -> Icons.Filled.PlaylistPlay
-                        Screen.Favorites -> Icons.Filled.Favorite
-                        Screen.Search -> Icons.Filled.Search
-                        else -> Icons.Filled.LibraryMusic
-                    }
-                    NavigationBarItem(
-                        icon = { Icon(icon, contentDescription = screen.label) },
-                        label = { Text(screen.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+                NavigationBar {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
+
+                    items.forEach { screen ->
+                        val icon = when (screen) {
+                            Screen.Library -> Icons.Filled.LibraryMusic
+                            Screen.Playlists -> Icons.Filled.PlaylistPlay
+                            Screen.Favorites -> Icons.Filled.Favorite
+                            Screen.Search -> Icons.Filled.Search
+                            else -> Icons.Filled.LibraryMusic
                         }
-                    )
+                        NavigationBarItem(
+                            icon = { Icon(icon, contentDescription = screen.label) },
+                            label = { Text(screen.label) },
+                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -103,7 +112,10 @@ fun MainScreen(songs: List<Song>, repository: MusicRepository) {
                 SongList(
                     songs = songs,
                     favoriteIds = favoriteIds,
-                    onToggleFavorite = ::toggleFavorite
+                    onToggleFavorite = ::toggleFavorite,
+                    onSongClick = { song ->
+                        player.playSong(song, songs)
+                    }
                 )
             }
             composable(Screen.Playlists.route) {
@@ -130,11 +142,21 @@ fun MainScreen(songs: List<Song>, repository: MusicRepository) {
                 SongList(
                     songs = favSongs,
                     favoriteIds = favoriteIds,
-                    onToggleFavorite = ::toggleFavorite
+                    onToggleFavorite = ::toggleFavorite,
+                    onSongClick = { song ->
+                        player.playSong(song, favSongs)
+                    }
                 )
             }
             composable(Screen.Search.route) {
-                Text("Buscar (próximamente)")
+                SearchScreen(
+                    songs = songs,
+                    favoriteIds = favoriteIds,
+                    onToggleFavorite = ::toggleFavorite,
+                    onSongClick = { song ->
+                        player.playSong(song, songs)
+                    }
+                )
             }
         }
     }
