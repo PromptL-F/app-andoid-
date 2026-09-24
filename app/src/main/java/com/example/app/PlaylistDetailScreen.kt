@@ -1,5 +1,6 @@
 package com.example.app
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +45,8 @@ private enum class PlaylistSortMode(val label: String) {
 fun PlaylistDetailScreen(
     playlistId: Long,
     allSongs: List<Song>,
-    repository: MusicRepository
+    repository: MusicRepository,
+    player: MusicPlayer
 ) {
     val scope = rememberCoroutineScope()
     val songIds by repository
@@ -59,7 +61,6 @@ fun PlaylistDetailScreen(
         allSongs.associateBy { it.id }
     }
 
-    // songIds ya llega ordenado por addedAt DESC desde MusicDao.
     val playlistSongsInAddedOrder = remember(songIds, songsById) {
         songIds.mapNotNull { songsById[it] }
     }
@@ -183,6 +184,9 @@ fun PlaylistDetailScreen(
                     key = { it.id }
                 ) { song ->
                     ListItem(
+                        modifier = Modifier.clickable {
+                            player.playSong(song, playlistSongs)
+                        },
                         headlineContent = { Text(song.title) },
                         supportingContent = { Text(song.artist) }
                     )

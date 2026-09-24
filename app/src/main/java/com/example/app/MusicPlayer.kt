@@ -1,5 +1,8 @@
 package com.example.app
 
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -22,7 +25,8 @@ class MusicPlayer(context: Context) {
     private val exoPlayer = ExoPlayer.Builder(context).build()
     private var progressJob: Job? = null
     private var queue: List<Song> = emptyList()
-
+    private val _repeatMode = MutableStateFlow(REPEAT_MODE_OFF)
+    val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
     private val _currentSong = MutableStateFlow<Song?>(null)
     val currentSong: StateFlow<Song?> = _currentSong.asStateFlow()
 
@@ -85,6 +89,16 @@ class MusicPlayer(context: Context) {
     fun togglePlayPause() {
         if (_currentSong.value == null) return
         if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+    }
+
+    fun cycleRepeatMode() {
+        val nextMode = when (exoPlayer.repeatMode) {
+            REPEAT_MODE_OFF -> REPEAT_MODE_ALL
+            REPEAT_MODE_ALL -> REPEAT_MODE_ONE
+            else -> REPEAT_MODE_OFF
+        }
+        exoPlayer.repeatMode = nextMode
+        _repeatMode.value = nextMode
     }
 
     fun seekForward(seconds: Long = 15L) {

@@ -134,7 +134,8 @@ fun MainScreen(
                 PlaylistDetailScreen(
                     playlistId = playlistId,
                     allSongs = songs,
-                    repository = repository
+                    repository = repository,
+                    player = player
                 )
             }
             composable(Screen.Favorites.route) {

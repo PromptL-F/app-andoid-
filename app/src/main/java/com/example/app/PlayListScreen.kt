@@ -7,9 +7,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -36,6 +38,7 @@ fun PlaylistsScreen(
     val scope = rememberCoroutineScope()
     val playlists by repository.getAllPlaylists().collectAsState(initial = emptyList())
     var showCreateDialog by remember { mutableStateOf(false) }
+    var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
 
     val userPlaylists = playlists.filter { !it.isFavorites }
 
@@ -50,7 +53,12 @@ fun PlaylistsScreen(
             items(userPlaylists) { playlist ->
                 ListItem(
                     headlineContent = { Text(playlist.name) },
-                    modifier = Modifier.clickable { onOpenPlaylist(playlist.id) }
+                    modifier = Modifier.clickable { onOpenPlaylist(playlist.id) },
+                    trailingContent = {
+                        IconButton(onClick = { playlistToDelete = playlist }) {
+                            Icon(Icons.Filled.Delete, contentDescription = "Borrar playlist")
+                        }
+                    }
                 )
             }
         }
@@ -82,6 +90,29 @@ fun PlaylistsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
+    playlistToDelete?.let { playlist ->
+        AlertDialog(
+            onDismissRequest = { playlistToDelete = null },
+            title = { Text("Borrar playlist") },
+            text = { Text("¿Seguro que quieres borrar \"${playlist.name}\"? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        repository.deletePlaylist(playlist.id)
+                    }
+                    playlistToDelete = null
+                }) {
+                    Text("Borrar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { playlistToDelete = null }) {
                     Text("Cancelar")
                 }
             }
