@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MusicNote
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -61,10 +63,40 @@ fun HomeScreen(
 ) {
     val scope = rememberCoroutineScope()
     val playlists by repository.getAllPlaylists().collectAsState(initial = emptyList())
-    val userPlaylists = playlists.filter { !it.isFavorites }
+    val userPlaylists = playlists.filter { !it.isFavorites && !it.isLibrary }
+    val libraryPlaylist = playlists.firstOrNull { it.isLibrary }
+    val librarySongIds by if (libraryPlaylist != null) {
+        repository.getSongIdsForPlaylist(libraryPlaylist.id).collectAsState(initial = emptyList())
+    } else {
+        remember { mutableStateOf(emptyList()) }
+    }
+    val librarySongs = librarySongIds
+        .mapNotNull { id -> songs.firstOrNull { song -> song.id == id } }
     var showCreateDialog by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.hades_logo),
+                contentDescription = "Logo de Hades",
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+            )
+            Text(
+                text = "Ludwin F.",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 12.dp)
+            )
+        }
+
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -75,10 +107,12 @@ fun HomeScreen(
             item(key = "all_songs") {
                 PlaylistCard(
                     title = "Toda la música",
-                    subtitle = "${songs.size} canciones",
+                    subtitle = "${librarySongs.size} canciones",
                     selected = true,
                     useLibraryIcon = true,
-                    onClick = { /* ya visible debajo por defecto */ }
+                    onClick = {
+                        libraryPlaylist?.id?.let(onOpenPlaylist)
+                    }
                 )
             }
 
@@ -87,7 +121,10 @@ fun HomeScreen(
                     title = playlist.name,
                     subtitle = "Playlist",
                     selected = false,
-                    onClick = { onOpenPlaylist(playlist.id) }
+                    onClick = { onOpenPlaylist(playlist.id) },
+                    playlistId = playlist.id,
+                    repository = repository,
+                    allSongs = songs
                 )
             }
 
@@ -96,14 +133,6 @@ fun HomeScreen(
             }
         }
 
-        SongList(
-            songs = songs,
-            favoriteIds = favoriteIds,
-            showHeader = false,
-            onToggleFavorite = onToggleFavorite,
-            onSongClick = { song -> player.playSong(song, songs) },
-            onAddToQueue = { song -> player.addToQueue(song) }
-        )
     }
 
     if (showCreateDialog) {
@@ -143,8 +172,20 @@ private fun PlaylistCard(
     subtitle: String,
     selected: Boolean,
     onClick: () -> Unit,
-    useLibraryIcon: Boolean = false
+    useLibraryIcon: Boolean = false,
+    playlistId: Long? = null,
+    repository: MusicRepository? = null,
+    allSongs: List<Song> = emptyList()
 ) {
+    val playlistSongIds by if (playlistId != null && repository != null) {
+        repository.getSongIdsForPlaylist(playlistId).collectAsState(initial = emptyList())
+    } else {
+        remember { mutableStateOf(emptyList()) }
+    }
+    val coverSongs = playlistSongIds
+        .mapNotNull { id -> allSongs.firstOrNull { song -> song.id == id } }
+        .take(4)
+
     Column(
         modifier = Modifier
             .width(128.dp)
@@ -187,12 +228,7 @@ private fun PlaylistCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
             } else {
-                Icon(
-                    imageVector = Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+                PlaylistCoverGrid(coverSongs)
             }
         }
         Text(
@@ -210,6 +246,40 @@ private fun PlaylistCard(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Composable
+private fun PlaylistCoverGrid(songs: List<Song>) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.foundation.layout.Row(modifier = Modifier.weight(1f)) {
+            PlaylistCoverTile(songs.getOrNull(0), Modifier.weight(1f))
+            PlaylistCoverTile(songs.getOrNull(1), Modifier.weight(1f))
+        }
+        androidx.compose.foundation.layout.Row(modifier = Modifier.weight(1f)) {
+            PlaylistCoverTile(songs.getOrNull(2), Modifier.weight(1f))
+            PlaylistCoverTile(songs.getOrNull(3), Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun PlaylistCoverTile(song: Song?, modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(0.5.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (song != null) {
+            SongArtwork(song, modifier = Modifier.fillMaxSize(), fixedSize = false)
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(HadesBackground)
+            )
+        }
     }
 }
 

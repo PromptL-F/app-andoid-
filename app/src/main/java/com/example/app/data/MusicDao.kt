@@ -21,6 +21,12 @@ interface MusicDao {
     @Query("SELECT * FROM playlists WHERE isFavorites = 1 LIMIT 1")
     suspend fun getFavoritesPlaylist(): PlaylistEntity?
 
+    @Query("SELECT * FROM playlists WHERE isLibrary = 1 LIMIT 1")
+    suspend fun getLibraryPlaylist(): PlaylistEntity?
+
+    @Query("SELECT * FROM playlists WHERE id = :playlistId LIMIT 1")
+    suspend fun getPlaylistById(playlistId: Long): PlaylistEntity?
+
     @Query("DELETE FROM playlists WHERE id = :playlistId")
     suspend fun deletePlaylist(playlistId: Long)
 

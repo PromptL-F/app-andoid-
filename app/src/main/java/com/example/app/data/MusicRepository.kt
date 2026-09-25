@@ -15,7 +15,27 @@ class MusicRepository(context: Context) {
         )
     }
 
+    suspend fun ensureLibraryPlaylistContains(songIds: List<Long>): Long {
+        val library = dao.getLibraryPlaylist() ?: PlaylistEntity(
+            name = "Toda la música",
+            isLibrary = true
+        ).let { playlist ->
+            val id = dao.insertPlaylist(playlist)
+            playlist.copy(id = id)
+        }
+
+        songIds.forEach { songId ->
+            if (!dao.isSongInPlaylist(library.id, songId)) {
+                dao.addSongToPlaylist(PlaylistSongCrossRef(library.id, songId))
+            }
+        }
+        return library.id
+    }
+
     fun getAllPlaylists(): Flow<List<PlaylistEntity>> = dao.getAllPlaylists()
+
+    suspend fun getPlaylistById(playlistId: Long): PlaylistEntity? =
+        dao.getPlaylistById(playlistId)
 
     suspend fun createPlaylist(name: String): Long {
         return dao.insertPlaylist(PlaylistEntity(name = name))

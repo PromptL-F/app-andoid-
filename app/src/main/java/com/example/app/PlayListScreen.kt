@@ -40,7 +40,7 @@ fun PlaylistsScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistToDelete by remember { mutableStateOf<PlaylistEntity?>(null) }
 
-    val userPlaylists = playlists.filter { !it.isFavorites }
+    val userPlaylists = playlists.filter { !it.isFavorites && !it.isLibrary }
 
     Scaffold(
         floatingActionButton = {

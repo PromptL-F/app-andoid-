@@ -9,5 +9,6 @@ data class PlaylistEntity(
     val id: Long = 0,
     val name: String,
     val isFavorites: Boolean = false,
+    val isLibrary: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

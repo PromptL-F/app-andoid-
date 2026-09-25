@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -49,6 +50,13 @@ fun PlaylistDetailScreen(
     player: MusicPlayer
 ) {
     val scope = rememberCoroutineScope()
+    val playlist = produceState<com.example.app.data.PlaylistEntity?>(
+        initialValue = null,
+        key1 = playlistId
+    ) {
+        value = repository.getPlaylistById(playlistId)
+    }.value
+    val isLibrary = playlist?.isLibrary == true
     val songIds by repository
         .getSongIdsForPlaylist(playlistId)
         .collectAsState(initial = emptyList())
@@ -88,7 +96,7 @@ fun PlaylistDetailScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Playlist",
+                        text = playlist?.name ?: "Playlist",
                         modifier = Modifier.padding(top = 16.dp)
                     )
                     Text(
@@ -123,11 +131,13 @@ fun PlaylistDetailScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddSongs = true }) {
-                Icon(
-                    Icons.Filled.Add,
-                    contentDescription = "Añadir canciones"
-                )
+            if (!isLibrary) {
+                FloatingActionButton(onClick = { showAddSongs = true }) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Añadir canciones"
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -145,7 +155,10 @@ fun PlaylistDetailScreen(
 
                     ListItem(
                         headlineContent = { Text(song.title) },
-                        supportingContent = { Text(song.artist) },
+                        supportingContent = song.metadataLineOrNull()?.let { metadata ->
+                            { Text(metadata) }
+                        },
+                        leadingContent = { SongArtwork(song) },
                         trailingContent = {
                             IconButton(onClick = {
                                 scope.launch {
@@ -188,7 +201,10 @@ fun PlaylistDetailScreen(
                             player.playSong(song, playlistSongs)
                         },
                         headlineContent = { Text(song.title) },
-                        supportingContent = { Text(song.artist) }
+                        supportingContent = song.metadataLineOrNull()?.let { metadata ->
+                            { Text(metadata) }
+                        },
+                        leadingContent = { SongArtwork(song) }
                     )
                 }
             }

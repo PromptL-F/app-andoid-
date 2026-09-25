@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
         if (granted) {
             permissionStatus.value = "Permiso concedido"
             songs.value = loadSongs()
+            syncLibraryPlaylist()
         } else {
             permissionStatus.value = "Permiso denegado"
         }
@@ -113,6 +114,7 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
             permissionStatus.value = "Permiso ya concedido"
             songs.value = loadSongs()
+            syncLibraryPlaylist()
         } else {
             permissionLauncher.launch(permission)
         }
@@ -200,6 +202,12 @@ class MainActivity : ComponentActivity() {
         }
 
         return songList
+    }
+
+    private fun syncLibraryPlaylist() {
+        lifecycleScope.launch {
+            repository.ensureLibraryPlaylistContains(songs.value.map { it.id })
+        }
     }
 }
 
@@ -324,10 +332,10 @@ fun SongList(
 @Composable
 fun SongArtwork(
     song: Song,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fixedSize: Boolean = true
 ) {
-    val artworkModifier = modifier
-        .size(56.dp)
+    val artworkModifier = (if (fixedSize) modifier.size(56.dp) else modifier)
         .clip(RoundedCornerShape(8.dp))
 
     if (song.artworkUri != null) {
