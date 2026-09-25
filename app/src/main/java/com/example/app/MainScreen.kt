@@ -5,8 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +65,7 @@ fun MainScreen(
         }
     }
 
-    val items = listOf(Screen.Library, Screen.Playlists, Screen.Favorites, Screen.Search)
+    val items = listOf(Screen.Home, Screen.Favorites, Screen.Search)
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -83,11 +82,10 @@ fun MainScreen(
 
                     items.forEach { screen ->
                         val icon = when (screen) {
-                            Screen.Library -> Icons.Filled.LibraryMusic
-                            Screen.Playlists -> Icons.Filled.PlaylistPlay
+                            Screen.Home -> Icons.Filled.Home
                             Screen.Favorites -> Icons.Filled.Favorite
                             Screen.Search -> Icons.Filled.Search
-                            else -> Icons.Filled.LibraryMusic
+                            else -> Icons.Filled.Home
                         }
                         NavigationBarItem(
                             icon = { Icon(icon, contentDescription = screen.label) },
@@ -117,24 +115,18 @@ fun MainScreen(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Library.route,
+            startDestination = Screen.Home.route,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            composable(Screen.Library.route) {
-                SongList(
+            composable(Screen.Home.route) {
+                HomeScreen(
                     songs = songs,
+                    repository = repository,
+                    player = player,
                     favoriteIds = favoriteIds,
                     onToggleFavorite = ::toggleFavorite,
-                    onSongClick = { song ->
-                        player.playSong(song, songs)
-                    }
-                )
-            }
-            composable(Screen.Playlists.route) {
-                PlaylistsScreen(
-                    repository = repository,
                     onOpenPlaylist = { playlistId ->
                         navController.navigate(Screen.PlaylistDetail.createRoute(playlistId))
                     }
@@ -160,7 +152,8 @@ fun MainScreen(
                     onToggleFavorite = ::toggleFavorite,
                     onSongClick = { song ->
                         player.playSong(song, favSongs)
-                    }
+                    },
+                    onAddToQueue = { song -> player.addToQueue(song) }
                 )
             }
             composable(Screen.Search.route) {
@@ -170,7 +163,8 @@ fun MainScreen(
                     onToggleFavorite = ::toggleFavorite,
                     onSongClick = { song ->
                         player.playSong(song, songs)
-                    }
+                    },
+                    onAddToQueue = { song -> player.addToQueue(song) }
                 )
             }
         }

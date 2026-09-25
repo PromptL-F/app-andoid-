@@ -77,26 +77,40 @@ class MusicPlayer(context: Context) {
         val mediaController = controller ?: return
         if (songs.isEmpty()) return
         queue = songs
-        val items = songs.map { song ->
-            MediaItem.Builder()
-                .setMediaId(song.id.toString())
-                .setUri(song.uri)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(song.title)
-                        .setArtist(song.artist)
-                        .setAlbumTitle(song.album)
-                        .setArtworkUri(song.artworkUri)
-                        .build()
-                )
-                .build()
-        }
+        val items = songs.map { it.toMediaItem() }
         val safeIndex = startIndex.coerceIn(0, items.lastIndex)
         mediaController.setMediaItems(items, safeIndex, 0L)
         mediaController.prepare()
         mediaController.play()
         updateState()
     }
+
+    /** Añade [song] al final de la cola actual sin interrumpir la reproducción en curso. */
+    fun addToQueue(song: Song) {
+        val mediaController = controller ?: return
+        if (mediaController.mediaItemCount == 0) {
+            // No hay nada sonando todavía: se comporta como reproducir esta canción.
+            playQueue(listOf(song))
+            return
+        }
+        queue = queue + song
+        mediaController.addMediaItem(song.toMediaItem())
+        updateState()
+    }
+
+    private fun Song.toMediaItem(): MediaItem =
+        MediaItem.Builder()
+            .setMediaId(id.toString())
+            .setUri(uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setArtist(artist)
+                    .setAlbumTitle(album)
+                    .setArtworkUri(artworkUri)
+                    .build()
+            )
+            .build()
 
     fun togglePlayPause() {
         controller?.let { if (it.isPlaying) it.pause() else it.play() }

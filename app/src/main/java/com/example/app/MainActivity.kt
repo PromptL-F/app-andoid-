@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,6 +35,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -42,7 +47,10 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import coil.compose.AsyncImage
 import androidx.core.content.ContextCompat
@@ -198,46 +206,51 @@ class MainActivity : ComponentActivity() {
 private fun String?.cleanMetadata(fallback: String = ""): String =
     this?.takeIf { value -> value.isNotBlank() && value != "<unknown>" } ?: fallback
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SongList(
     songs: List<Song>,
     modifier: Modifier = Modifier,
     favoriteIds: Set<Long> = emptySet(),
+    showHeader: Boolean = true,
     onToggleFavorite: (Long) -> Unit = {},
-    onSongClick: (Song) -> Unit = {}
+    onSongClick: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.hades_logo),
-                    contentDescription = "Logo de Hades",
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        text = "Hades",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
+        if (showHeader) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.hades_logo),
+                        contentDescription = "Logo de Hades",
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
                     )
-                    Text(
-                        text = "Tu música",
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(
+                            text = "Hades",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Tu música",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    }
                 }
+                Text(
+                    text = "${songs.size} canciones",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Text(
-                text = "${songs.size} canciones",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
 
         LazyColumn(modifier = Modifier.weight(1f)) {
@@ -246,43 +259,63 @@ fun SongList(
                 key = { it.id }
             ) { song ->
                 val isFavorite = song.id in favoriteIds
+                var showQueueMenu by remember { mutableStateOf(false) }
 
-                ListItem(
-                    modifier = Modifier.clickable {
-                        onSongClick(song)
-                    },
-                    headlineContent = { Text(song.title) },
-                    supportingContent = song.metadataLineOrNull()?.let { metadata ->
-                        { Text(metadata) }
-                    },
-                    leadingContent = { SongArtwork(song) },
-                    colors = ListItemDefaults.colors(
-                        containerColor = Color.Transparent,
-                        headlineColor = MaterialTheme.colorScheme.onSurface,
-                        supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    trailingContent = {
-                        IconButton(onClick = { onToggleFavorite(song.id) }) {
-                            Icon(
-                                imageVector = if (isFavorite) {
-                                    Icons.Filled.Favorite
-                                } else {
-                                    Icons.Filled.FavoriteBorder
-                                },
-                                contentDescription = if (isFavorite) {
-                                    "Quitar de favoritos"
-                                } else {
-                                    "Añadir a favoritos"
-                                },
-                                tint = if (isFavorite) {
-                                    MaterialTheme.colorScheme.tertiary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
+                Box {
+                    ListItem(
+                        modifier = Modifier.combinedClickable(
+                            onClick = { onSongClick(song) },
+                            onLongClick = { showQueueMenu = true }
+                        ),
+                        headlineContent = { Text(song.title) },
+                        supportingContent = song.metadataLineOrNull()?.let { metadata ->
+                            { Text(metadata) }
+                        },
+                        leadingContent = { SongArtwork(song) },
+                        colors = ListItemDefaults.colors(
+                            containerColor = Color.Transparent,
+                            headlineColor = MaterialTheme.colorScheme.onSurface,
+                            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        trailingContent = {
+                            IconButton(onClick = { onToggleFavorite(song.id) }) {
+                                Icon(
+                                    imageVector = if (isFavorite) {
+                                        Icons.Filled.Favorite
+                                    } else {
+                                        Icons.Filled.FavoriteBorder
+                                    },
+                                    contentDescription = if (isFavorite) {
+                                        "Quitar de favoritos"
+                                    } else {
+                                        "Añadir a favoritos"
+                                    },
+                                    tint = if (isFavorite) {
+                                        MaterialTheme.colorScheme.tertiary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
                         }
+                    )
+
+                    DropdownMenu(
+                        expanded = showQueueMenu,
+                        onDismissRequest = { showQueueMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Añadir a la cola") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.QueueMusic, contentDescription = null)
+                            },
+                            onClick = {
+                                onAddToQueue(song)
+                                showQueueMenu = false
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     }

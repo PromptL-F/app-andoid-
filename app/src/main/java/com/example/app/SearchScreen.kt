@@ -1,7 +1,10 @@
 package com.example.app
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -40,12 +46,14 @@ import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import java.text.Normalizer
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchScreen(
     songs: List<Song>,
     favoriteIds: Set<Long> = emptySet(),
     onToggleFavorite: (Long) -> Unit = {},
-    onSongClick: (Song) -> Unit = {}
+    onSongClick: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {}
 ) {
     var query by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -103,41 +111,63 @@ fun SearchScreen(
                     key = { it.id }
                 ) { song ->
                     val isFavorite = song.id in favoriteIds
+                    var showQueueMenu by remember { mutableStateOf(false) }
 
-                    ListItem(
-                        modifier = Modifier.clickable { onSongClick(song) },
-                        headlineContent = { Text(song.title) },
-                        supportingContent = song.metadataLineOrNull()?.let { metadata ->
-                            { Text(metadata) }
-                        },
-                        leadingContent = { SongArtwork(song) },
-                        colors = ListItemDefaults.colors(
-                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                            headlineColor = MaterialTheme.colorScheme.onSurface,
-                            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        trailingContent = {
-                            IconButton(onClick = { onToggleFavorite(song.id) }) {
-                                Icon(
-                                    imageVector = if (isFavorite) {
-                                        Icons.Filled.Favorite
-                                    } else {
-                                        Icons.Filled.FavoriteBorder
-                                    },
-                                    contentDescription = if (isFavorite) {
-                                        "Quitar de favoritos"
-                                    } else {
-                                        "Añadir a favoritos"
-                                    },
-                                    tint = if (isFavorite) {
-                                        MaterialTheme.colorScheme.tertiary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
-                                )
+                    Box {
+                        ListItem(
+                            modifier = Modifier.combinedClickable(
+                                onClick = { onSongClick(song) },
+                                onLongClick = { showQueueMenu = true }
+                            ),
+                            headlineContent = { Text(song.title) },
+                            supportingContent = song.metadataLineOrNull()?.let { metadata ->
+                                { Text(metadata) }
+                            },
+                            leadingContent = { SongArtwork(song) },
+                            colors = ListItemDefaults.colors(
+                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                headlineColor = MaterialTheme.colorScheme.onSurface,
+                                supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            trailingContent = {
+                                IconButton(onClick = { onToggleFavorite(song.id) }) {
+                                    Icon(
+                                        imageVector = if (isFavorite) {
+                                            Icons.Filled.Favorite
+                                        } else {
+                                            Icons.Filled.FavoriteBorder
+                                        },
+                                        contentDescription = if (isFavorite) {
+                                            "Quitar de favoritos"
+                                        } else {
+                                            "Añadir a favoritos"
+                                        },
+                                        tint = if (isFavorite) {
+                                            MaterialTheme.colorScheme.tertiary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        }
+                                    )
+                                }
                             }
+                        )
+
+                        DropdownMenu(
+                            expanded = showQueueMenu,
+                            onDismissRequest = { showQueueMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Añadir a la cola") },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.QueueMusic, contentDescription = null)
+                                },
+                                onClick = {
+                                    onAddToQueue(song)
+                                    showQueueMenu = false
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
         }
