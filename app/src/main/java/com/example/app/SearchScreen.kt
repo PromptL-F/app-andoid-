@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import java.text.Normalizer
 
 @Composable
@@ -100,7 +107,15 @@ fun SearchScreen(
                     ListItem(
                         modifier = Modifier.clickable { onSongClick(song) },
                         headlineContent = { Text(song.title) },
-                        supportingContent = { Text(song.artist) },
+                        supportingContent = song.metadataLineOrNull()?.let { metadata ->
+                            { Text(metadata) }
+                        },
+                        leadingContent = { SongArtwork(song) },
+                        colors = ListItemDefaults.colors(
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            headlineColor = MaterialTheme.colorScheme.onSurface,
+                            supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
                         trailingContent = {
                             IconButton(onClick = { onToggleFavorite(song.id) }) {
                                 Icon(
@@ -113,6 +128,11 @@ fun SearchScreen(
                                         "Quitar de favoritos"
                                     } else {
                                         "Añadir a favoritos"
+                                    },
+                                    tint = if (isFavorite) {
+                                        MaterialTheme.colorScheme.tertiary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                     }
                                 )
                             }

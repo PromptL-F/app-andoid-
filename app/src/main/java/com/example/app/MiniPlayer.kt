@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,7 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import kotlin.math.max
@@ -69,7 +75,9 @@ fun MiniPlayer(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { isExpanded = !isExpanded },
-            tonalElevation = 6.dp
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            tonalElevation = 0.dp,
+            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -77,11 +85,13 @@ fun MiniPlayer(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "${currentSong.title} · ${currentSong.artist}",
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
+                if (!isExpanded) {
+                    Text(
+                        text = "${currentSong.title} · ${currentSong.artist}",
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 Icon(
                     imageVector = if (isExpanded) Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
                     contentDescription = if (isExpanded) "Ocultar reproductor" else "Mostrar reproductor"
@@ -94,7 +104,9 @@ fun MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 128.dp),
-                tonalElevation = 6.dp,
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
                 onClick = onOpenFullPlayer
             ) {
                 Column(
@@ -106,8 +118,10 @@ fun MiniPlayer(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = currentSong.title, maxLines = 1)
-                            Text(text = currentSong.artist, maxLines = 1)
+                            Text(text = "${currentSong.artist} · ${currentSong.album}", maxLines = 1)
                         }
+
+                        SongArtwork(currentSong)
 
                         Text(
                             text = "${formatTime(sliderPosition.toLong())} / ${formatTime(duration)}",
