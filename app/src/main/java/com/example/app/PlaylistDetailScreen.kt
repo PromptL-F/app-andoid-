@@ -13,7 +13,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -22,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,7 +50,8 @@ fun PlaylistDetailScreen(
     playlistId: Long,
     allSongs: List<Song>,
     repository: MusicRepository,
-    player: MusicPlayer
+    player: MusicPlayer,
+    onDeleted: () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val playlist = produceState<com.example.app.data.PlaylistEntity?>(
@@ -57,12 +61,15 @@ fun PlaylistDetailScreen(
         value = repository.getPlaylistById(playlistId)
     }.value
     val isLibrary = playlist?.isLibrary == true
+    val isFavorites = playlist?.isFavorites == true
+    val canDelete = playlist != null && !isLibrary && !isFavorites
     val songIds by repository
         .getSongIdsForPlaylist(playlistId)
         .collectAsState(initial = emptyList())
 
     var showAddSongs by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     var sortMode by remember { mutableStateOf(PlaylistSortMode.ADDED_NEWEST) }
 
     val songsById = remember(allSongs) {
@@ -105,26 +112,37 @@ fun PlaylistDetailScreen(
                     )
                 }
 
-                Box {
-                    IconButton(onClick = { showSortMenu = true }) {
-                        Icon(
-                            Icons.Filled.Sort,
-                            contentDescription = "Ordenar canciones"
-                        )
+                Row {
+                    if (canDelete) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Borrar playlist"
+                            )
+                        }
                     }
 
-                    DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { showSortMenu = false }
-                    ) {
-                        PlaylistSortMode.entries.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option.label) },
-                                onClick = {
-                                    sortMode = option
-                                    showSortMenu = false
-                                }
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                Icons.Filled.Sort,
+                                contentDescription = "Ordenar canciones"
                             )
+                        }
+
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            PlaylistSortMode.entries.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.label) },
+                                    onClick = {
+                                        sortMode = option
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -209,5 +227,33 @@ fun PlaylistDetailScreen(
                 }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Borrar playlist") },
+            text = {
+                Text(
+                    "¿Seguro que quieres borrar \"${playlist?.name}\"? Esta acción no se puede deshacer."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        repository.deletePlaylist(playlistId)
+                    }
+                    showDeleteConfirm = false
+                    onDeleted()
+                }) {
+                    Text("Borrar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }

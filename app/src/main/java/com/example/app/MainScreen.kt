@@ -141,7 +141,8 @@ fun MainScreen(
                     playlistId = playlistId,
                     allSongs = songs,
                     repository = repository,
-                    player = player
+                    player = player,
+                    onDeleted = { navController.popBackStack() }
                 )
             }
             composable(Screen.Favorites.route) {

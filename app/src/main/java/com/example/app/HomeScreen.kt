@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -331,26 +332,43 @@ private fun LibraryIcon(
         val totalWidth = barWidth * 3 + barSpacing * 2
         val startX = (size.width - totalWidth) / 2f
         val bottomY = size.height
-
-        for (i in 0..1) {
-            val x = startX + i * (barWidth + barSpacing)
-            drawRoundRect(
-                color = tint,
-                topLeft = Offset(x, bottomY - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = cornerRadius
-            )
-        }
-
+        val leanDegrees = 22f
         val thirdX = startX + 2 * (barWidth + barSpacing)
         val pivot = Offset(thirdX + barWidth / 2f, bottomY)
-        rotate(degrees = 22f, pivot = pivot) {
-            drawRoundRect(
-                color = tint,
-                topLeft = Offset(thirdX, bottomY - barHeight),
-                size = Size(barWidth, barHeight),
-                cornerRadius = cornerRadius
-            )
+
+        // La barra inclinada desplaza el "centro visual" del conjunto hacia un
+        // lado (su punta sobresale más que una barra recta). Calculamos la caja
+        // real que ocupan las tres barras (incluida la rotada) para recentrar
+        // todo el dibujo con precisión, en vez de centrar solo la barra recta.
+        val theta = Math.toRadians(leanDegrees.toDouble())
+        val cos = kotlin.math.cos(theta).toFloat()
+        val sin = kotlin.math.sin(theta).toFloat()
+        val halfBar = barWidth / 2f
+        val rotatedCornerXs = listOf(-halfBar to -barHeight, halfBar to -barHeight, -halfBar to 0f, halfBar to 0f)
+            .map { (dx, dy) -> pivot.x + dx * cos - dy * sin }
+        val overallMinX = minOf(startX, rotatedCornerXs.min())
+        val overallMaxX = maxOf(startX + 2 * (barWidth + barSpacing) + barWidth, rotatedCornerXs.max())
+        val shiftX = size.width / 2f - (overallMinX + overallMaxX) / 2f
+
+        translate(left = shiftX) {
+            for (i in 0..1) {
+                val x = startX + i * (barWidth + barSpacing)
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(x, bottomY - barHeight),
+                    size = Size(barWidth, barHeight),
+                    cornerRadius = cornerRadius
+                )
+            }
+
+            rotate(degrees = leanDegrees, pivot = pivot) {
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(thirdX, bottomY - barHeight),
+                    size = Size(barWidth, barHeight),
+                    cornerRadius = cornerRadius
+                )
+            }
         }
     }
 }

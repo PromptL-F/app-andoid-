@@ -2,16 +2,22 @@ package com.example.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD18AFF)
-val PurpleGrey80 = Color(0xFFD6C1E8)
-val Pink80 = Color(0xFFFF9DE2)
+// Paleta cálida (naranja/rojo ceniza) — reemplaza la anterior morado/rosa.
+val Orange80 = Color(0xFFFFB088)
+val OrangeGrey80 = Color(0xFFE0C9BE)
+val Red80 = Color(0xFFFF9E85)
 
-val Purple40 = Color(0xFF7436B8)
-val PurpleGrey40 = Color(0xFF655477)
-val Pink40 = Color(0xFFB63E83)
+val Orange40 = Color(0xFFB84A1E)
+val OrangeGrey40 = Color(0xFF7A5C4E)
+val Red40 = Color(0xFFB43A2A)
 
-val HadesBackground = Color(0xFF0F0B14)
-val HadesSurface = Color(0xFF17111F)
-val HadesSurfaceVariant = Color(0xFF2A2133)
-val HadesText = Color(0xFFEDE5F2)
-val HadesTextMuted = Color(0xFFCEC2D5)
+val HadesBackground = Color(0xFF141311)
+val HadesSurface = Color(0xFF1C1A17)
+val HadesSurfaceVariant = Color(0xFF2A2622)
+val HadesText = Color(0xFFF3ECE6)
+val HadesTextMuted = Color(0xFFBBB0A6)
+
+// Acentos principales: naranja-rojo brillante, como brasas.
+val EmberOrange = Color(0xFFFF5A1F)
+val EmberOrangeDark = Color(0xFFB33A12)
+val EmberRed = Color(0xFFE1382A)

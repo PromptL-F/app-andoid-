@@ -347,10 +347,10 @@ fun SongArtwork(
         )
     } else {
         val palettes = listOf(
-            listOf(Color(0xFF512DA8), Color(0xFFE040FB)),
+            listOf(Color(0xFF7A2E12), Color(0xFFFF6A3D)),
             listOf(Color(0xFF00695C), Color(0xFF26A69A)),
             listOf(Color(0xFF1565C0), Color(0xFF42A5F5)),
-            listOf(Color(0xFFAD1457), Color(0xFFFF7043)),
+            listOf(Color(0xFF8B2500), Color(0xFFE1382A)),
             listOf(Color(0xFF4E342E), Color(0xFFFFB300))
         )
         val palette = palettes[(song.id % palettes.size).toInt()]
