@@ -281,7 +281,7 @@ fun SongList(
                         },
                         leadingContent = { SongArtwork(song) },
                         colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             headlineColor = MaterialTheme.colorScheme.onSurface,
                             supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
                         ),

@@ -8,14 +8,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.Icons
@@ -50,7 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.app.data.MusicRepository
 import com.example.app.ui.theme.HadesBackground
-import com.example.app.ui.theme.HadesSurfaceVariant
+import com.example.app.ui.theme.HadesBackgroundGlow
+import com.example.app.ui.theme.HadesSurfaceBright
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,16 +67,17 @@ fun HomeScreen(
     val playlists by repository.getAllPlaylists().collectAsState(initial = emptyList())
     val userPlaylists = playlists.filter { !it.isFavorites && !it.isLibrary }
     val libraryPlaylist = playlists.firstOrNull { it.isLibrary }
-    val librarySongIds by if (libraryPlaylist != null) {
-        repository.getSongIdsForPlaylist(libraryPlaylist.id).collectAsState(initial = emptyList())
-    } else {
-        remember { mutableStateOf(emptyList()) }
-    }
-    val librarySongs = librarySongIds
-        .mapNotNull { id -> songs.firstOrNull { song -> song.id == id } }
     var showCreateDialog by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(HadesBackgroundGlow.copy(alpha = 0.72f), HadesBackground)
+                )
+            )
+    ) {
         androidx.compose.foundation.layout.Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,17 +100,19 @@ fun HomeScreen(
             )
         }
 
-        LazyRow(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 4.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item(key = "all_songs") {
                 PlaylistCard(
                     title = "Toda la música",
-                    subtitle = "${librarySongs.size} canciones",
                     selected = true,
                     useLibraryIcon = true,
                     onClick = {
@@ -120,8 +124,7 @@ fun HomeScreen(
             items(items = userPlaylists, key = { it.id }) { playlist ->
                 PlaylistCard(
                     title = playlist.name,
-                    subtitle = "Playlist",
-                    selected = false,
+                    selected = true,
                     onClick = { onOpenPlaylist(playlist.id) },
                     playlistId = playlist.id,
                     repository = repository,
@@ -170,7 +173,6 @@ fun HomeScreen(
 @Composable
 private fun PlaylistCard(
     title: String,
-    subtitle: String,
     selected: Boolean,
     onClick: () -> Unit,
     useLibraryIcon: Boolean = false,
@@ -189,37 +191,33 @@ private fun PlaylistCard(
 
     Column(
         modifier = Modifier
-            .width(128.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(HadesSurfaceVariant)
-            .then(
-                if (selected) {
-                    Modifier.border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                } else Modifier
-            )
+            .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(12.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
+                .aspectRatio(1f)
                 .clip(RoundedCornerShape(10.dp))
                 .background(
                     if (useLibraryIcon) {
-                        Brush.linearGradient(listOf(HadesSurfaceVariant, HadesBackground))
+                        Brush.linearGradient(listOf(HadesSurfaceBright, HadesBackgroundGlow))
                     } else {
                         Brush.linearGradient(
                             listOf(
                                 MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.secondary,
                                 MaterialTheme.colorScheme.tertiary
                             )
                         )
                     }
+                )
+                .border(
+                    width = if (selected) 2.dp else 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(
+                        alpha = if (selected) 0.9f else 0.5f
+                    ),
+                    shape = RoundedCornerShape(10.dp)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -238,14 +236,10 @@ private fun PlaylistCard(
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 7.dp, start = 2.dp, end = 2.dp)
         )
     }
 }
@@ -278,7 +272,7 @@ private fun PlaylistCoverTile(song: Song?, modifier: Modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(HadesBackground)
+                    .background(HadesBackgroundGlow)
             )
         }
     }
@@ -288,29 +282,44 @@ private fun PlaylistCoverTile(song: Song?, modifier: Modifier) {
 private fun AddPlaylistCard(onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(128.dp)
-            .height(124.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.Transparent)
-            .border(
-                width = 2.dp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(16.dp)
-            )
+            .fillMaxWidth()
             .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Filled.Add,
-            contentDescription = "Crear playlist",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
+                            HadesSurfaceBright,
+                            HadesBackgroundGlow
+                        )
+                    )
+                )
+                .border(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(10.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "Crear playlist",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(30.dp)
+            )
+        }
         Text(
             text = "Añadir",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp)
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(top = 7.dp)
         )
     }
 }

@@ -59,6 +59,7 @@ import androidx.media3.common.Player.REPEAT_MODE_ONE
 import android.net.Uri
 import coil.compose.AsyncImage
 import com.example.app.ui.theme.HadesBackground
+import com.example.app.ui.theme.HadesBackgroundGlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.max
@@ -143,14 +144,24 @@ private fun CollapsedBar(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onExpand() },
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 0.dp,
+        color = Color.Transparent,
+        tonalElevation = 8.dp,
         shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            HadesBackgroundGlow,
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        )
+                    ),
+                    RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)
+                )
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -206,13 +217,23 @@ private fun ExpandedPlayer(
         modifier = Modifier
             .fillMaxWidth()
             .height(expandedHeight),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 0.dp,
+        color = Color.Transparent,
+        tonalElevation = 12.dp,
         shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceContainerHighest,
+                            MaterialTheme.colorScheme.surface,
+                            HadesBackground
+                        )
+                    ),
+                    RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
+                )
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {

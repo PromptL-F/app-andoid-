@@ -11,13 +11,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = EmberOrange,
+    primary = NeonMagenta,
     onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = EmberOrangeDark,
-    onPrimaryContainer = Color(0xFFFFDCC7),
-    secondary = Color(0xFFE07A4A),
-    onSecondary = Color(0xFF2E1206),
-    tertiary = EmberRed,
+    primaryContainer = VioletDeep,
+    onPrimaryContainer = Color(0xFFF2E6FF),
+    secondary = NeonPurple,
+    onSecondary = Color(0xFF160D2B),
+    tertiary = NeonBlue,
     onTertiary = Color(0xFFFFFFFF),
     background = HadesBackground,
     onBackground = HadesText,
@@ -25,13 +25,17 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = HadesText,
     surfaceVariant = HadesSurfaceVariant,
     onSurfaceVariant = HadesTextMuted,
-    outline = Color(0xFF8A8074)
+    surfaceContainer = HadesSurface,
+    surfaceContainerHigh = HadesSurfaceRaised,
+    surfaceContainerHighest = HadesSurfaceBright,
+    outline = Color(0xFF6F5A8C),
+    outlineVariant = Color(0xFF3D2D55)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Orange40,
-    secondary = OrangeGrey40,
-    tertiary = Red40
+    primary = Violet40,
+    secondary = Lavender40,
+    tertiary = Magenta40
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

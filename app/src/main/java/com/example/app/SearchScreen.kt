@@ -1,6 +1,7 @@
 package com.example.app
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import java.text.Normalizer
@@ -71,7 +73,18 @@ fun SearchScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+                    )
+                )
+            )
+    ) {
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
@@ -125,7 +138,7 @@ fun SearchScreen(
                             },
                             leadingContent = { SongArtwork(song) },
                             colors = ListItemDefaults.colors(
-                                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                 headlineColor = MaterialTheme.colorScheme.onSurface,
                                 supportingColor = MaterialTheme.colorScheme.onSurfaceVariant
                             ),
