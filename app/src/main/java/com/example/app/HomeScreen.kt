@@ -92,7 +92,7 @@ fun HomeScreen(
                     .clip(RoundedCornerShape(14.dp))
             )
             Text(
-                text = "Ludwin F.",
+                text = "Ludwin,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
